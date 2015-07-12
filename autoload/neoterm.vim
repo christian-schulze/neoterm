@@ -14,6 +14,22 @@ function! neoterm#exec(list)
   end
 endfunction
 
+" Internal: Loads a terminal, if it is not loaded, and execute a list of
+" commands.
+function! neoterm#exec_at(id, list)
+  let current_window = winnr()
+
+  call neoterm#show(a:id)
+  call jobsend(g:neoterm[a:id].job_id, a:list)
+
+  if g:neoterm_keep_term_open
+    silent exec current_window . "wincmd w | set noinsertmode"
+  else
+    call jobsend(g:neoterm_terminal_jid, ["\<c-d>"])
+    startinsert
+  end
+endfunction
+
 " Internal: Creates a new neoterm buffer, or opens if it already exists.
 function! neoterm#open()
   return neoterm#show() || neoterm#new()
@@ -35,6 +51,19 @@ function! neoterm#new()
         \ 'job_id': termopen([&sh], opts),
         \ 'buffer_id': bufnr('%')
         \ }
+  call s:create_mappings(neoterm_id)
+endfunction
+
+function! s:create_mappings(id)
+  if has_key(g:neoterm, a:id)
+    let buffer_id = g:neoterm[a:id].buffer_id
+
+    exec 'command! -complete=shellcmd Topen' . a:id . ' call neoterm#show(' . a:id . ')'
+    exec 'command! -complete=shellcmd Tclose' . a:id . ' call neoterm#close_buffer(' . buffer_id . ')'
+    exec 'command! -complete=shellcmd -nargs=+ T' . a:id . ' call neoterm#do_at(' . a:id . ', <q-args>)'
+  else
+    echoe 'There is no '.a:id.' neoterm.'
+  end
 endfunction
 
 function! s:neoterm_counter()
@@ -45,14 +74,27 @@ endfunction
 " Internal: Open a new split with the current neoterm buffer if there is one.
 "
 " Returns: 1 if a neoterm split is opened, 0 otherwise.
-function! neoterm#show()
-  if exists('g:neoterm_terminal_jid') && !neoterm#tab_has_neoterm()
-    exec <sid>split_cmd()
-    exec "buffer ".g:neoterm_buffer_id
-    return 1
-  else
-    return 0
+function! neoterm#show(...)
+  if !empty(a:000) && has_key(g:neoterm, a:1)
+    if !neoterm#tab_has_this_neoterm(a:1)
+      call s:show(a:1)
+      return 1
+    end
+  elseif g:neoterm.last_id
+    if !neoterm#tab_has_this_neoterm(g:neoterm.last_id)
+      call  s:show(g:neoterm.last_id)
+      return 1
+    end
   end
+
+  return 0
+endfunction
+
+function! s:show(neoterm_id)
+  let buffer_id = g:neoterm[a:neoterm_id].buffer_id
+
+  exec <sid>split_cmd()
+  exec "buffer " . buffer_id
 endfunction
 
 function! s:split_cmd()
@@ -64,10 +106,25 @@ function! s:split_cmd()
 endfunction
 
 " Internal: Verifies if neoterm is open for current tab.
+function! neoterm#tab_has_this_neoterm(id)
+  return has_key(g:neoterm, a:id) &&
+        \ bufexists(g:neoterm[a:id].buffer_id) > 0 &&
+        \ bufwinnr(g:neoterm[a:id].buffer_id) != -1
+endfunction
+
+" Internal: Verifies if neoterm is open for current tab.
 function! neoterm#tab_has_neoterm()
   return exists('g:neoterm_buffer_id') &&
         \ bufexists(g:neoterm_buffer_id) > 0 &&
         \ bufwinnr(g:neoterm_buffer_id) != -1
+endfunction
+
+" Public: Executes a command on terminal.
+" Evaluates any "%" inside the command to the full path of the current file.
+function! neoterm#do_at(id, command)
+  let command = neoterm#expand_cmd(a:command)
+
+  call neoterm#exec_at(a:id, [command, ''])
 endfunction
 
 " Public: Executes a command on terminal.
