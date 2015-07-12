@@ -23,18 +23,23 @@ endfunction
 "
 " Returns: 1 if a new terminal was created, 0 otherwise.
 function! neoterm#new()
+  let neoterm_id = s:neoterm_counter()
   let opts = extend(
-        \ { 'name': 'NEOTERM' },
+        \ { 'name': 'NEOTERM-' . neoterm_id },
         \ neoterm#test#handlers()
         \ )
 
-  if !exists('g:neoterm_terminal_jid') " there is no neoterm running
-    exec <sid>split_cmd()
-    call termopen([&sh], opts)
-    return 1
-  else
-    return 0
-  end
+  exec <sid>split_cmd()
+  echom 'new'
+  let g:neoterm[neoterm_id] = {
+        \ 'job_id': termopen([&sh], opts),
+        \ 'buffer_id': bufnr('%')
+        \ }
+endfunction
+
+function! s:neoterm_counter()
+  let g:neoterm.last_id += 1
+  return g:neoterm.last_id
 endfunction
 
 " Internal: Open a new split with the current neoterm buffer if there is one.

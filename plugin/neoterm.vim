@@ -4,6 +4,9 @@ endif
 
 let g:neoterm_last_test_command = ''
 let g:neoterm_statusline = ''
+let g:neoterm = {
+      \ 'last_id': 0,
+      \ }
 
 if !exists('g:neoterm_size')
   let g:neoterm_size = ''
@@ -50,10 +53,8 @@ hi! NeotermTestSuccess ctermfg=2 ctermbg=0
 hi! NeotermTestFailed ctermfg=1 ctermbg=0
 
 aug neoterm_setup
-  au TermOpen term://*:NEOTERM let g:neoterm_terminal_jid = b:terminal_job_id
-  au TermOpen term://*:NEOTERM let g:neoterm_buffer_id = bufnr('%')
-  au TermOpen term://*:NEOTERM setlocal nonumber norelativenumber
-  au BufUnload,BufDelete,BufWipeout term://*:NEOTERM
+  au TermOpen term://*:NEOTERM* setlocal nonumber norelativenumber
+  au BufUnload,BufDelete,BufWipeout term://*:NEOTERM*
         \ unlet! g:neoterm_terminal_jid |
         \ unlet! g:neoterm_buffer_id |
         \ unlet! g:neoterm_repl_loaded |
@@ -65,6 +66,7 @@ command! -complete=customlist,neoterm#test#libs#autocomplete -nargs=? TTestLib c
 command! TTestClearStatus let g:neoterm_statusline=''
 command! -nargs=1 Tpos let g:neoterm_position=<q-args>
 
+command! -complete=shellcmd Tnew call neoterm#new()
 command! -complete=shellcmd Topen call neoterm#open()
 command! -complete=shellcmd Tclose call neoterm#close_all()
 command! -complete=shellcmd -nargs=+ T call neoterm#do(<q-args>)
