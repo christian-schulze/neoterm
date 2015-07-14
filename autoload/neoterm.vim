@@ -11,6 +11,38 @@ function! neoterm#new()
   call instance.mappings()
 endfunction
 
+function! neoterm#open()
+  if !neoterm#tab_has_neoterm()
+    if g:neoterm.last_id < 1 || g:neoterm.open < 1
+      call neoterm#new()
+    else
+      call g:neoterm.last().open()
+    end
+  end
+endfunction
+
+function! neoterm#close()
+  call g:neoterm.last().close()
+endfunction
+
+function! neoterm#do(command)
+  call neoterm#open()
+  call g:neoterm.last().exec(a:command)
+endfunction
+
+function! neoterm#tab_has_neoterm()
+  if g:neoterm.last_id > 0 && g:neoterm.open > 0
+    let buffer_id = g:neoterm.last().buffer_id
+    return bufexists(buffer_id) > 0 && bufwinnr(buffer_id) != -1
+  end
+endfunction
+
+function! neoterm#last()
+  if g:neoterm.last_id > 0 && g:neoterm.open > 0
+    return g:neoterm[g:neoterm.last_id]
+  end
+endfunction
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let s:neoterm = {}
 
@@ -22,6 +54,7 @@ function! s:neoterm.new(id)
 
   let instance.job_id = termopen([&sh], instance)
   let instance.buffer_id = bufnr('')
+  let g:neoterm.open += 1
 
   return instance
 endfunction
@@ -51,4 +84,5 @@ endfunction
 
 function! s:neoterm.on_exit()
   call remove(g:neoterm, self.id)
+  let g:neoterm.open -= 1
 endfunction
