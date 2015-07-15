@@ -2,53 +2,53 @@ if !has("nvim")
   finish
 endif
 
-let g:neoterm_last_test_command = ''
-let g:neoterm_statusline = ''
+let g:neoterm_last_test_command = ""
+let g:neoterm_statusline = ""
 
-if !exists('g:neoterm_size')
-  let g:neoterm_size = ''
+if !exists("g:neoterm_size")
+  let g:neoterm_size = ""
 end
 
-if !exists('g:neoterm_test_libs')
+if !exists("g:neoterm_test_libs")
   let g:neoterm_test_libs = []
 end
 
-if !exists('g:neoterm_position')
-  let g:neoterm_position = 'horizontal'
+if !exists("g:neoterm_position")
+  let g:neoterm_position = "horizontal"
 end
 
-if !exists('g:neoterm_automap_keys')
-  let g:neoterm_automap_keys = ',tt'
+if !exists("g:neoterm_automap_keys")
+  let g:neoterm_automap_keys = ",tt"
 end
 
-if !exists('g:neoterm_keep_term_open')
+if !exists("g:neoterm_keep_term_open")
   let g:neoterm_keep_term_open = 1
 end
 
-if !exists('g:neoterm_run_tests_bg')
+if !exists("g:neoterm_run_tests_bg")
   let g:neoterm_run_tests_bg = 0
 end
 
-if !exists('g:neoterm_raise_when_tests_fail')
+if !exists("g:neoterm_raise_when_tests_fail")
   let g:neoterm_raise_when_tests_fail = 0
 end
 
-if !exists('g:neoterm_test_status_format')
-  let g:neoterm_test_status_format = '[%s]'
+if !exists("g:neoterm_test_status_format")
+  let g:neoterm_test_status_format = "[%s]"
 end
 
-if !exists('g:neoterm_test_status')
+if !exists("g:neoterm_test_status")
   let g:neoterm_test_status = {
-        \ 'running': 'RUNNING',
-        \ 'success': 'SUCCESS',
-        \ 'failed': 'FAILED'
+        \ "running": "RUNNING",
+        \ "success": "SUCCESS",
+        \ "failed": "FAILED"
         \ }
 end
 
 let g:neoterm = {
-      \ 'last_id': 0,
-      \ 'open': 0,
-      \ 'last': function('neoterm#last')
+      \ "last_id": 0,
+      \ "open": 0,
+      \ "last": function("neoterm#last")
       \ }
 
 hi! NeotermTestRunning ctermfg=11 ctermbg=0
@@ -69,5 +69,5 @@ command! -complete=shellcmd -nargs=+ Tmap call neoterm#map_for(<q-args>)
 command! -range=% TREPLSendFile call neoterm#repl#selection(<line1>, <line2>)
 command! -range TREPLSend call neoterm#repl#selection(<line1>, <line2>)
 command! -complete=customlist,neoterm#test#libs#autocomplete -nargs=? TTestLib call neoterm#test#libs#add(<q-args>)
-command! TTestClearStatus let g:neoterm_statusline=''
+command! TTestClearStatus let g:neoterm_statusline=""
 command! -nargs=1 Tpos let g:neoterm_position=<q-args>
