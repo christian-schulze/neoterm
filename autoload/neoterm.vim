@@ -4,11 +4,25 @@ function! s:next_neoterm_id()
 endfunction
 
 function! neoterm#new()
-  new
+  let current_window = s:create_split()
+
   let instance = s:neoterm.new(s:next_neoterm_id())
   let g:neoterm[instance.id] = instance
-
   call instance.mappings()
+
+  silent exec current_window . "wincmd w | set noinsertmode"
+endfunction
+
+function! s:create_split()
+  let current_window = winnr()
+
+  if g:neoterm_position == "horizontal"
+    exec "botright ".g:neoterm_size." new"
+  else
+    exec "botright vert".g:neoterm_size." new"
+  end
+
+  return current_window
 endfunction
 
 function! neoterm#open()
@@ -26,8 +40,23 @@ function! neoterm#close()
 endfunction
 
 function! neoterm#do(command)
+  call neoterm#exec([a:command, ''])
+endfunction
+
+function! neoterm#exec(command)
   call neoterm#open()
   call g:neoterm.last().exec(a:command)
+endfunction
+
+function! neoterm#map_for(command)
+  exec "nnoremap <silent> "
+        \ . g:neoterm_automap_keys .
+        \ " :T " . neoterm#expand_cmd(a:command) . "<cr>"
+endfunction
+
+" Internal: Expands "%" in commands to current file full path.
+function! neoterm#expand_cmd(command)
+  return substitute(a:command, '%', expand('%:p'), 'g')
 endfunction
 
 function! neoterm#tab_has_neoterm()
@@ -37,10 +66,24 @@ function! neoterm#tab_has_neoterm()
   end
 endfunction
 
+" Internal: Clear the current neoterm buffer. (Send a <C-l>)
+function! neoterm#clear()
+  silent call neoterm#exec("\<c-l>")
+endfunction
+
+" Internal: Kill current process on neoterm. (Send a <C-c>)
+function! neoterm#kill()
+  silent call neoterm#exec("\<c-c>")
+endfunction
+
 function! neoterm#last()
   if g:neoterm.last_id > 0 && g:neoterm.open > 0
     return g:neoterm[g:neoterm.last_id]
   end
+endfunction
+
+function! neoterm#has_any()
+  return g:neoterm.open > 0
 endfunction
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -70,8 +113,11 @@ function! s:neoterm.mappings() dict
 endfunction
 
 function! s:neoterm.open() dict
-  new
+  let current_window = s:create_split()
+
   exec 'buffer ' . self.buffer_id
+
+  silent exec current_window . "wincmd w | set noinsertmode"
 endfunction
 
 function! s:neoterm.close() dict
@@ -79,7 +125,7 @@ function! s:neoterm.close() dict
 endfunction
 
 function! s:neoterm.exec(command)
-  call jobsend(self.job_id, [a:command, ''])
+  call jobsend(self.job_id, a:command)
 endfunction
 
 function! s:neoterm.on_exit()
