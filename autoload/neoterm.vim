@@ -3,6 +3,9 @@ function! s:next_neoterm_id()
   return g:neoterm.last_id
 endfunction
 
+" Internal: Creates a new neoterm buffer if there is no one.
+"
+" Returns: 1 if a new terminal was created, 0 otherwise.
 function! neoterm#new()
   if !has_key(g:neoterm, 'term')
     exec "source " . globpath(&rtp, "autoload/neoterm.term.vim")
@@ -29,6 +32,7 @@ function! s:create_split()
   return current_window
 endfunction
 
+" Internal: Creates a new neoterm buffer, or opens if it already exists.
 function! neoterm#open()
   if !neoterm#tab_has_neoterm()
     if g:neoterm.last_id < 1 || g:neoterm.open < 1
@@ -43,10 +47,16 @@ function! neoterm#close()
   call g:neoterm.last().close()
 endfunction
 
+" Public: Executes a command on terminal.
+" Evaluates any "%" inside the command to the full path of the current file.
 function! neoterm#do(command)
-  call neoterm#exec([a:command, ""])
+  let command = neoterm#expand_cmd(a:command)
+
+  call neoterm#exec([command, ""])
 endfunction
 
+" Internal: Loads a terminal, if it is not loaded, and execute a list of
+" commands.
 function! neoterm#exec(command)
   call neoterm#open()
   call g:neoterm.last().exec(a:command)
@@ -63,6 +73,9 @@ function! neoterm#expand_cmd(command)
   return substitute(a:command, "%", expand("%:p"), "g")
 endfunction
 
+" Internal: Open a new split with the current neoterm buffer if there is one.
+"
+" Returns: 1 if a neoterm split is opened, 0 otherwise.
 function! neoterm#tab_has_neoterm()
   if g:neoterm.last_id > 0 && g:neoterm.open > 0
     let buffer_id = g:neoterm.last().buffer_id
